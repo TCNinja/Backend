@@ -6,4 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-uuid = "1.4.1"
+actix-web = "4.3.1"
+serde = { version = "1.0.183", features = ["derive"] }
+uuid = { version = "1.4.1", features = ["serde"]}

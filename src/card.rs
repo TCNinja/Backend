@@ -1,6 +1,7 @@
+use serde::Serialize;
 use uuid::Uuid;
 
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
+#[derive(Serialize, Clone, Eq, PartialEq, Debug, Default)]
 pub enum CardFinish {
     #[default]
     NonFoil,
@@ -10,7 +11,7 @@ pub enum CardFinish {
     Etched,
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
+#[derive(Serialize, Clone, Eq, PartialEq, Debug, Default)]
 pub struct Card {
     pub id: Uuid,
     pub oracle_id: Uuid,

@@ -70,7 +70,6 @@ impl ScryfallCardSearchEngine {
                 },
                 scryfall_uri: card.scryfall_uri.clone(),
                 scryfall_set_uri: card.scryfall_set_uri.clone(),
-                ..Default::default()
             })
             .collect();
 

@@ -36,7 +36,7 @@ async fn search_cards(
         Err(e) => {
             eprintln!("{e}");
             HttpResponse::InternalServerError().finish()
-        },
+        }
     }
 }
 

@@ -48,12 +48,16 @@ pub struct ScryfallCardSearchEngine {
 }
 
 impl ScryfallCardSearchEngine {
-    pub fn new() -> Option<Self> {
-        let base_url = reqwest::Url::parse(BASE_URL).ok()?;
-        let search_url = base_url.join("/cards/search").ok()?;
-        Some(Self {
-            client: reqwest::ClientBuilder::new().build().ok()?,
-            search_url,
+    pub fn new() -> Result<Self, InfrastructureError> {
+        let base_url =
+            reqwest::Url::parse(BASE_URL).map_err(|e| InfrastructureError::Unknown(e.into()))?;
+        Ok(Self {
+            client: reqwest::ClientBuilder::new()
+                .build()
+                .map_err(|e| InfrastructureError::Unknown(e.into()))?,
+            search_url: base_url
+                .join("/cards/search")
+                .map_err(|e| InfrastructureError::Unknown(e.into()))?,
         })
     }
 

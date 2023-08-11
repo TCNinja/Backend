@@ -41,9 +41,9 @@ async fn search_cards(
 }
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> anyhow::Result<()> {
     let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 8080);
-    let search_engine = ScryfallCardSearchEngine::new().unwrap();
+    let search_engine = ScryfallCardSearchEngine::new()?;
 
     HttpServer::new(move || {
         App::new()
@@ -52,5 +52,7 @@ async fn main() -> std::io::Result<()> {
     })
     .bind(address)?
     .run()
-    .await
+    .await?;
+
+    Ok(())
 }

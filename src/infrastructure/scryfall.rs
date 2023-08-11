@@ -12,14 +12,28 @@ struct ScryfallCard {
     name: String,
     lang: String,
     scryfall_uri: String,
-    image_uris: Option<ScryfallImageUris>, // `None` when card has multiple faces
     type_line: String,
     scryfall_set_uri: String,
+    #[serde(flatten)]
+    card_face_kind: ScryfallCardFaceKind,
+}
+
+#[derive(Deserialize)]
+enum ScryfallCardFaceKind {
+    #[serde(rename = "image_uris")]
+    SingleFace(ScryfallImageUris),
+    #[serde(rename = "card_faces")]
+    MultipleFace([ScryfallCardFace; 2]),
 }
 
 #[derive(Deserialize)]
 struct ScryfallImageUris {
     png: String,
+}
+
+#[derive(Deserialize)]
+struct ScryfallCardFace {
+    image_uris: ScryfallImageUris,
 }
 
 #[derive(Deserialize)]
@@ -64,9 +78,9 @@ impl ScryfallCardSearchEngine {
                 name: card.name.clone(),
                 type_line: card.type_line.clone(),
                 language: card.lang.clone(),
-                image_uri: match &card.image_uris {
-                    Some(uris) => uris.png.clone(),
-                    None => Default::default(),
+                image_uri: match &card.card_face_kind {
+                    ScryfallCardFaceKind::SingleFace(image_uris) => image_uris.png.clone(),
+                    ScryfallCardFaceKind::MultipleFace(faces) => faces[0].image_uris.png.clone(),
                 },
                 scryfall_uri: card.scryfall_uri.clone(),
                 scryfall_set_uri: card.scryfall_set_uri.clone(),

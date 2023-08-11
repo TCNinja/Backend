@@ -1,7 +1,9 @@
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::{card::Card, infrastructure::InfrastructureError};
+use crate::{
+    card::Card, infrastructure::InfrastructureError, infrastructure::InfrastructureResult,
+};
 
 const BASE_URL: &str = "https://api.scryfall.com/";
 
@@ -48,7 +50,7 @@ pub struct ScryfallCardSearchEngine {
 }
 
 impl ScryfallCardSearchEngine {
-    pub fn new() -> Result<Self, InfrastructureError> {
+    pub fn new() -> InfrastructureResult<Self> {
         let base_url =
             reqwest::Url::parse(BASE_URL).map_err(|e| InfrastructureError::Unknown(e.into()))?;
         Ok(Self {
@@ -61,7 +63,7 @@ impl ScryfallCardSearchEngine {
         })
     }
 
-    pub async fn search_cards_by_name(&self, name: &str) -> Result<Vec<Card>, InfrastructureError> {
+    pub async fn search_cards_by_name(&self, name: &str) -> InfrastructureResult<Vec<Card>> {
         let response: ScryfallSearchResponse = self
             .client
             .get(self.search_url.clone())

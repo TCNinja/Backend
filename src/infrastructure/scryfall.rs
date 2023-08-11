@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -6,6 +7,19 @@ use crate::{
 };
 
 const BASE_URL: &str = "https://api.scryfall.com/";
+
+#[derive(Deserialize)]
+#[serde(tag = "object")]
+enum ScryfallObject {
+    #[serde(rename = "list")]
+    List {
+        data: Vec<ScryfallCard>,
+    },
+    #[serde(rename = "error")]
+    Error {
+        details: String,
+    },
+}
 
 #[derive(Deserialize)]
 struct ScryfallCard {
@@ -38,11 +52,6 @@ struct ScryfallCardFace {
     image_uris: ScryfallImageUris,
 }
 
-#[derive(Deserialize)]
-struct ScryfallSearchResponse {
-    data: Vec<ScryfallCard>,
-}
-
 #[derive(Clone)]
 pub struct ScryfallCardSearchEngine {
     client: reqwest::Client,
@@ -64,7 +73,7 @@ impl ScryfallCardSearchEngine {
     }
 
     pub async fn search_cards_by_name(&self, name: &str) -> InfrastructureResult<Vec<Card>> {
-        let response: ScryfallSearchResponse = self
+        let object: ScryfallObject = self
             .client
             .get(self.search_url.clone())
             .query(&[("q", name)])
@@ -75,23 +84,31 @@ impl ScryfallCardSearchEngine {
             .await
             .map_err(|e| InfrastructureError::Parse(e.to_string()))?;
 
-        let cards = response
-            .data
-            .iter()
-            .map(|card| Card {
-                id: card.id,
-                oracle_id: card.oracle_id,
-                name: card.name.clone(),
-                type_line: card.type_line.clone(),
-                language: card.lang.clone(),
-                image_uri: match &card.card_face_kind {
-                    ScryfallCardFaceKind::SingleFace(image_uris) => image_uris.png.clone(),
-                    ScryfallCardFaceKind::MultipleFace(faces) => faces[0].image_uris.png.clone(),
-                },
-                scryfall_uri: card.scryfall_uri.clone(),
-                scryfall_set_uri: card.scryfall_set_uri.clone(),
-            })
-            .collect();
+        let cards = match object {
+            ScryfallObject::List { data } => data
+                .iter()
+                .map(|card| Card {
+                    id: card.id,
+                    oracle_id: card.oracle_id,
+                    name: card.name.clone(),
+                    type_line: card.type_line.clone(),
+                    language: card.lang.clone(),
+                    image_uri: match &card.card_face_kind {
+                        ScryfallCardFaceKind::SingleFace(image_uris) => image_uris.png.clone(),
+                        ScryfallCardFaceKind::MultipleFace(faces) => {
+                            faces[0].image_uris.png.clone()
+                        }
+                    },
+                    scryfall_uri: card.scryfall_uri.clone(),
+                    scryfall_set_uri: card.scryfall_set_uri.clone(),
+                })
+                .collect(),
+            ScryfallObject::Error { details } => {
+                return Err(InfrastructureError::Unknown(anyhow!(
+                    "Received error from Scryfall '{details}'"
+                )))
+            }
+        };
 
         Ok(cards)
     }

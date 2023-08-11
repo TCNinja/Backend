@@ -9,6 +9,6 @@ pub type InfrastructureResult<T> = Result<T, InfrastructureError>;
 pub enum InfrastructureError {
     #[error("Failed to parse data from infrastructure ({0})")]
     Parse(String),
-    #[error("Unknown infrastructure error")]
+    #[error(transparent)]
     Unknown(anyhow::Error),
 }

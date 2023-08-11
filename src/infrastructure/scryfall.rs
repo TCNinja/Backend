@@ -12,13 +12,9 @@ const BASE_URL: &str = "https://api.scryfall.com/";
 #[serde(tag = "object")]
 enum ScryfallObject {
     #[serde(rename = "list")]
-    List {
-        data: Vec<ScryfallCard>,
-    },
+    List { data: Vec<ScryfallCard> },
     #[serde(rename = "error")]
-    Error {
-        details: String,
-    },
+    Error { details: String },
 }
 
 #[derive(Deserialize)]
@@ -73,13 +69,15 @@ impl ScryfallCardSearchEngine {
     }
 
     pub async fn search_cards_by_name(&self, name: &str) -> InfrastructureResult<Vec<Card>> {
-        let object: ScryfallObject = self
+        let response = self
             .client
             .get(self.search_url.clone())
             .query(&[("q", name)])
             .send()
             .await
-            .map_err(|e| InfrastructureError::Unknown(e.into()))?
+            .map_err(|e| InfrastructureError::Unknown(e.into()))?;
+
+        let object = response
             .json()
             .await
             .map_err(|e| InfrastructureError::Parse(e.to_string()))?;

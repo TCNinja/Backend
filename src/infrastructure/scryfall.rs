@@ -64,10 +64,10 @@ impl ScryfallCardSearchEngine {
             .query(&[("q", name)])
             .send()
             .await
-            .map_err(|e| InfrastructureError::ReqwestError(e))?
+            .map_err(|e| InfrastructureError::Unknown(e.into()))?
             .json()
             .await
-            .map_err(|e| InfrastructureError::ReqwestError(e))?;
+            .map_err(|e| InfrastructureError::Parse(e.to_string()))?;
 
         let cards = response
             .data

@@ -1,18 +1,12 @@
 mod scryfall;
 
 pub use scryfall::ScryfallCardSearchEngine;
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum InfrastructureError {
-    ReqwestError(reqwest::Error),
+    #[error("Failed to parse data from infrastructure ({0})")]
+    Parse(String),
+    #[error("Unknown infrastructure error")]
+    Unknown(anyhow::Error),
 }
-
-impl std::fmt::Display for InfrastructureError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            InfrastructureError::ReqwestError(e) => e.fmt(f),
-        }
-    }
-}
-
-impl std::error::Error for InfrastructureError{}

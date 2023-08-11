@@ -1,11 +1,17 @@
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
-use actix_web::{get, web::Query, App, HttpResponse, HttpServer, Responder};
+use actix_web::{
+    get,
+    web::{Data, Query},
+    App, HttpResponse, HttpServer, Responder,
+};
+use infrastructure::ScryfallCardSearchEngine;
 use serde::{Deserialize, Serialize};
 
 use crate::card::Card;
 
 mod card;
+mod infrastructure;
 
 #[derive(Deserialize)]
 struct CardSearchParamaters {
@@ -18,22 +24,33 @@ struct CardSearchResponse {
 }
 
 #[get("/cards/search")]
-async fn search_cards(search_parameters: Query<CardSearchParamaters>) -> impl Responder {
-    let card = Card {
-        name: search_parameters.card_name.clone(),
-        ..Default::default()
-    };
-
-    HttpResponse::Ok().json(CardSearchResponse {
-        results: vec![card],
-    })
+async fn search_cards(
+    search_engine: Data<ScryfallCardSearchEngine>,
+    search_parameters: Query<CardSearchParamaters>,
+) -> impl Responder {
+    match search_engine
+        .search_cards_by_name(&search_parameters.card_name)
+        .await
+    {
+        Ok(cards) => HttpResponse::Ok().json(CardSearchResponse { results: cards }),
+        Err(e) => {
+            eprintln!("{e}");
+            HttpResponse::InternalServerError().finish()
+        },
+    }
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 8080);
-    HttpServer::new(|| App::new().service(search_cards))
-        .bind(address)?
-        .run()
-        .await
+    let search_engine = ScryfallCardSearchEngine::new().unwrap();
+
+    HttpServer::new(move || {
+        App::new()
+            .app_data(Data::new(search_engine.clone()))
+            .service(search_cards)
+    })
+    .bind(address)?
+    .run()
+    .await
 }

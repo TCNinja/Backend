@@ -77,6 +77,10 @@ impl ScryfallCardSearchEngine {
             .await
             .map_err(|e| InfrastructureError::Unknown(e.into()))?;
 
+        if response.status() == reqwest::StatusCode::NOT_FOUND {
+            return Ok(Vec::new());
+        }
+
         let object = response
             .json()
             .await

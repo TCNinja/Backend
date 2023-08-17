@@ -54,6 +54,24 @@ pub struct ScryfallSearchEngine {
     search_url: reqwest::Url,
 }
 
+impl From<&ScryfallCard> for Card {
+    fn from(value: &ScryfallCard) -> Self {
+        Self {
+            id: value.id,
+            oracle_id: value.oracle_id,
+            name: value.name.clone(),
+            type_line: value.type_line.clone(),
+            language: value.lang.clone(),
+            image_uri: match &value.card_face_kind {
+                ScryfallCardFaceKind::SingleFace(image_uris) => image_uris.png.clone(),
+                ScryfallCardFaceKind::MultipleFace(faces) => faces[0].image_uris.png.clone(),
+            },
+            scryfall_uri: value.scryfall_uri.clone(),
+            scryfall_set_uri: value.scryfall_set_uri.clone(),
+        }
+    }
+}
+
 impl ScryfallSearchEngine {
     pub fn new() -> InfrastructureResult<Self> {
         let base_url =
@@ -87,24 +105,7 @@ impl ScryfallSearchEngine {
             .map_err(|e| InfrastructureError::Parse(e.to_string()))?;
 
         let cards = match object {
-            ScryfallObject::List { data } => data
-                .iter()
-                .map(|card| Card {
-                    id: card.id,
-                    oracle_id: card.oracle_id,
-                    name: card.name.clone(),
-                    type_line: card.type_line.clone(),
-                    language: card.lang.clone(),
-                    image_uri: match &card.card_face_kind {
-                        ScryfallCardFaceKind::SingleFace(image_uris) => image_uris.png.clone(),
-                        ScryfallCardFaceKind::MultipleFace(faces) => {
-                            faces[0].image_uris.png.clone()
-                        }
-                    },
-                    scryfall_uri: card.scryfall_uri.clone(),
-                    scryfall_set_uri: card.scryfall_set_uri.clone(),
-                })
-                .collect(),
+            ScryfallObject::List { data } => data.iter().map(Card::from).collect(),
             ScryfallObject::Error { details } => {
                 return Err(InfrastructureError::Unknown(anyhow!(
                     "Received error from Scryfall '{details}'"

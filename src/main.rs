@@ -1,3 +1,6 @@
+mod card;
+mod infrastructure;
+
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use actix_web::{
@@ -5,13 +8,9 @@ use actix_web::{
     web::{Data, Query},
     App, HttpResponse, HttpServer, Responder,
 };
-use infrastructure::ScryfallSearchEngine;
 use serde::{Deserialize, Serialize};
 
-use crate::card::Card;
-
-mod card;
-mod infrastructure;
+use crate::{card::Card, infrastructure::ScryfallSearchEngine};
 
 #[derive(Deserialize)]
 struct CardSearchParamaters {

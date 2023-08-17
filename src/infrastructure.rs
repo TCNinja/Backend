@@ -1,7 +1,8 @@
 mod scryfall;
 
-pub use scryfall::ScryfallSearchEngine;
 use thiserror::Error;
+
+pub use scryfall::ScryfallSearchEngine;
 
 pub type InfrastructureResult<T> = Result<T, InfrastructureError>;
 

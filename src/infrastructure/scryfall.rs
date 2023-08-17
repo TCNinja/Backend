@@ -3,7 +3,8 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::{
-    card::Card, infrastructure::InfrastructureError, infrastructure::InfrastructureResult,
+    card::Card,
+    infrastructure::{InfrastructureError, InfrastructureResult},
 };
 
 const BASE_URL: &str = "https://api.scryfall.com/";

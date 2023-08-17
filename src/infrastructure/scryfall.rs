@@ -49,12 +49,12 @@ struct ScryfallCardFace {
 }
 
 #[derive(Clone)]
-pub struct ScryfallCardSearchEngine {
+pub struct ScryfallSearchEngine {
     client: reqwest::Client,
     search_url: reqwest::Url,
 }
 
-impl ScryfallCardSearchEngine {
+impl ScryfallSearchEngine {
     pub fn new() -> InfrastructureResult<Self> {
         let base_url =
             reqwest::Url::parse(BASE_URL).map_err(|e| InfrastructureError::Unknown(e.into()))?;

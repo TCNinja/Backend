@@ -1,6 +1,6 @@
 mod scryfall;
 
-pub use scryfall::ScryfallCardSearchEngine;
+pub use scryfall::ScryfallSearchEngine;
 use thiserror::Error;
 
 pub type InfrastructureResult<T> = Result<T, InfrastructureError>;

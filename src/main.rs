@@ -5,7 +5,7 @@ use actix_web::{
     web::{Data, Query},
     App, HttpResponse, HttpServer, Responder,
 };
-use infrastructure::ScryfallCardSearchEngine;
+use infrastructure::ScryfallSearchEngine;
 use serde::{Deserialize, Serialize};
 
 use crate::card::Card;
@@ -25,7 +25,7 @@ struct CardSearchResponse {
 
 #[get("/cards/search")]
 async fn search_cards(
-    search_engine: Data<ScryfallCardSearchEngine>,
+    search_engine: Data<ScryfallSearchEngine>,
     search_parameters: Query<CardSearchParamaters>,
 ) -> impl Responder {
     match search_engine
@@ -43,7 +43,7 @@ async fn search_cards(
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
     let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 8080);
-    let search_engine = ScryfallCardSearchEngine::new()?;
+    let search_engine = ScryfallSearchEngine::new()?;
 
     HttpServer::new(move || {
         App::new()

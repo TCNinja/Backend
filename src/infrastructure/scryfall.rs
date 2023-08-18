@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+use reqwest::Response;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -89,13 +90,7 @@ impl ScryfallSearchEngine {
 
     pub async fn search_cards_by_name(&self, name: &str) -> InfrastructureResult<Vec<Card>> {
         let query = format!("\"{name}\"");
-        let response = self
-            .client
-            .get(self.search_url.clone())
-            .query(&[("q", &query)])
-            .send()
-            .await
-            .map_err(|e| InfrastructureError::Unknown(e.into()))?;
+        let response = self.search_cards(&query).await?;
 
         if response.status() == reqwest::StatusCode::NOT_FOUND {
             return Ok(Vec::new());
@@ -116,5 +111,23 @@ impl ScryfallSearchEngine {
         };
 
         Ok(cards)
+    }
+
+    /// Sends a query to Scryfall's `/cards/search` endpoint.
+    /// Scryfall documentation at https://scryfall.com/docs/api/cards/search.
+    ///
+    /// The query is sent using `self.client` and `self.search_url`.
+    /// Query parameters are URL encoded and formatted into the URL
+    /// before the request is sent.
+    ///
+    /// * `query` - The raw fulltext query to be sent to the Scryfall API.
+    /// Syntax is specified by Scryfall at https://scryfall.com/docs/syntax.
+    async fn search_cards(&self, query: &str) -> InfrastructureResult<Response> {
+        self.client
+            .get(self.search_url.clone())
+            .query(&[("q", query)])
+            .send()
+            .await
+            .map_err(|e| InfrastructureError::Unknown(e.into()))
     }
 }

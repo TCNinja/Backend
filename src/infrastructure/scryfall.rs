@@ -96,10 +96,7 @@ impl ScryfallSearchEngine {
             return Ok(Vec::new());
         }
 
-        let object = response
-            .json()
-            .await
-            .map_err(|e| InfrastructureError::Parse(e.to_string()))?;
+        let object = self.parse_response(response).await?;
 
         let cards = match object {
             ScryfallObject::List { data } => data.iter().map(Card::from).collect(),
@@ -129,5 +126,12 @@ impl ScryfallSearchEngine {
             .send()
             .await
             .map_err(|e| InfrastructureError::Unknown(e.into()))
+    }
+
+    async fn parse_response(&self, response: Response) -> InfrastructureResult<ScryfallObject> {
+        response
+            .json()
+            .await
+            .map_err(|e| InfrastructureError::Parse(e.to_string()))
     }
 }

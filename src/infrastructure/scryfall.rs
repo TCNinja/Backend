@@ -88,10 +88,11 @@ impl ScryfallSearchEngine {
     }
 
     pub async fn search_cards_by_name(&self, name: &str) -> InfrastructureResult<Vec<Card>> {
+        let query = format!("\"{name}\"");
         let response = self
             .client
             .get(self.search_url.clone())
-            .query(&[("q", name)])
+            .query(&[("q", &query)])
             .send()
             .await
             .map_err(|e| InfrastructureError::Unknown(e.into()))?;

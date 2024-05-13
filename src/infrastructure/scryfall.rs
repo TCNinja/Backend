@@ -3,10 +3,7 @@ use reqwest::Response;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::{
-    card::Card,
-    infrastructure::{InfrastructureError, InfrastructureResult},
-};
+use crate::card::Card;
 
 const BASE_URL: &str = "https://api.scryfall.com/";
 
@@ -75,20 +72,15 @@ impl From<&ScryfallCard> for Card {
 }
 
 impl ScryfallSearchEngine {
-    pub fn new() -> InfrastructureResult<Self> {
-        let base_url =
-            reqwest::Url::parse(BASE_URL).map_err(|e| InfrastructureError::Unknown(e.into()))?;
+    pub fn new() -> anyhow::Result<Self> {
+        let base_url = reqwest::Url::parse(BASE_URL)?;
         Ok(Self {
-            client: reqwest::ClientBuilder::new()
-                .build()
-                .map_err(|e| InfrastructureError::Unknown(e.into()))?,
-            search_url: base_url
-                .join("/cards/search")
-                .map_err(|e| InfrastructureError::Unknown(e.into()))?,
+            client: reqwest::ClientBuilder::new().build()?,
+            search_url: base_url.join("/cards/search")?,
         })
     }
 
-    pub async fn search_cards_by_name(&self, name: &str) -> InfrastructureResult<Vec<Card>> {
+    pub async fn search_cards_by_name(&self, name: &str) -> anyhow::Result<Vec<Card>> {
         let query = format!("\"{name}\"");
         let response = self.search_cards(&query).await?;
 
@@ -101,9 +93,7 @@ impl ScryfallSearchEngine {
         let cards = match object {
             ScryfallObject::List { data } => data.iter().map(Card::from).collect(),
             ScryfallObject::Error { details } => {
-                return Err(InfrastructureError::Unknown(anyhow!(
-                    "Received error from Scryfall '{details}'"
-                )))
+                return Err(anyhow!("Received error from Scryfall '{details}'"))
             }
         };
 
@@ -119,19 +109,16 @@ impl ScryfallSearchEngine {
     ///
     /// * `query` - The raw fulltext query to be sent to the Scryfall API.
     /// Syntax is specified by Scryfall at https://scryfall.com/docs/syntax.
-    async fn search_cards(&self, query: &str) -> InfrastructureResult<Response> {
-        self.client
+    async fn search_cards(&self, query: &str) -> anyhow::Result<Response> {
+        Ok(self
+            .client
             .get(self.search_url.clone())
             .query(&[("q", query)])
             .send()
-            .await
-            .map_err(|e| InfrastructureError::Unknown(e.into()))
+            .await?)
     }
 
-    async fn parse_response(&self, response: Response) -> InfrastructureResult<ScryfallObject> {
-        response
-            .json()
-            .await
-            .map_err(|e| InfrastructureError::Parse(e.to_string()))
+    async fn parse_response(&self, response: Response) -> anyhow::Result<ScryfallObject> {
+        Ok(response.json().await?)
     }
 }
